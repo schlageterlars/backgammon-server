@@ -30,6 +30,13 @@ class LobbyActor(lobbyId: String, options: LobbyOptions) extends Actor {
     case Leave(user) =>
       users -= user
       broadcast(s"$user left the lobby")
+    
+    case Move(user, from, to) => 
+      controller.doAndPublish(
+        controller.put,
+        de.htwg.se.backgammon.model.base.Move.create(controller.game, controller.currentPlayer, from.toInt, to.toInt)
+      )
+      broadcast(GameUpdate(controller.game, controller.currentPlayer, controller.dice))
   }
 
   private def broadcast(msg: OutgoingMessage): Unit = {

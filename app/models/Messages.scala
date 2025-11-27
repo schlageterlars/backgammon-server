@@ -8,15 +8,20 @@ import de.htwg.se.backgammon.model.IGame
 sealed trait ClientMessage
 case class JoinLobby(user: String) extends ClientMessage
 case class ChatMessage(user: String, text: String) extends ClientMessage
+case class MoveMessage(from: String, to: String) extends ClientMessage
+
 
 object ClientMessage {
   implicit val joinFormat: OFormat[JoinLobby] = Json.format[JoinLobby]
   implicit val chatFormat: OFormat[ChatMessage] = Json.format[ChatMessage]
+  implicit val moveFormat: OFormat[MoveMessage] = Json.format[MoveMessage]
+
 
   implicit val clientMessageFormat: Format[ClientMessage] = new Format[ClientMessage] {
     def writes(msg: ClientMessage): JsValue = msg match {
-      case j: JoinLobby    => Json.obj("type" -> "JoinLobby") ++ Json.toJsObject(j)
-      case c: ChatMessage  => Json.obj("type" -> "ChatMessage") ++ Json.toJsObject(c)
+      case j: JoinLobby     => Json.obj("type" -> "JoinLobby") ++ Json.toJsObject(j)
+      case c: ChatMessage   => Json.obj("type" -> "ChatMessage") ++ Json.toJsObject(c)
+      case m: MoveMessage   => Json.obj("type" -> "MoveMessage") ++ Json.toJsObject(m)
     }
 
     def reads(json: JsValue): JsResult[ClientMessage] = (json \ "type").validate[String].flatMap {
@@ -26,12 +31,19 @@ object ClientMessage {
       case "ChatMessage" =>
         val withoutType = json.as[JsObject] - "type"
         withoutType.validate[ChatMessage]
+      case "MoveMessage" =>
+        val withoutType = json.as[JsObject] - "type"
+        withoutType.validate[MoveMessage]
       case other =>
         JsError(s"Unknown type: $other")
     }
   }
 
-  def fromJson(js: JsValue): JsResult[ClientMessage] = js.validate[ClientMessage]
+  def fromJson(js: JsValue): JsResult[ClientMessage] =  {
+    val test = js.validate[ClientMessage]
+    println(test)
+    return test
+  }
 
 }
 

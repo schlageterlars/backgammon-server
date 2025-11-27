@@ -15,7 +15,9 @@ class ClientActor(lobby: ActorRef, user: String, out: ActorRef) extends Actor {
   def receive: Receive = {
     case msg: ChatMessage =>
       lobby ! BroadcastMessage(user, msg.text)
-
+    case msg: MoveMessage => 
+      println("Received move")
+      lobby ! Move(user, msg.from, msg.to)
     case player: Player =>
       this.player = Some(player)
       out ! PlayerAssigned(player)

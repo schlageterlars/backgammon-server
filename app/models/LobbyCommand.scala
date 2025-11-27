@@ -6,3 +6,5 @@ sealed trait LobbyCommand
 case class Join(user: String, ref: ActorRef) extends LobbyCommand
 case class Leave(user: String) extends LobbyCommand
 case class BroadcastMessage(user: String, text: String) extends LobbyCommand
+case class Move(user: String, from: String, to: String) extends LobbyCommand
+
