@@ -5,6 +5,7 @@ import models._
 import play.api.libs.json._
 import play.libs.Json
 import de.htwg.se.backgammon.model.Player
+import controllers.StopActor
 
 class ClientActor(lobby: ActorRef, user: String, out: ActorRef) extends Actor {
   private var player: Option[Player] = None
@@ -25,6 +26,8 @@ class ClientActor(lobby: ActorRef, user: String, out: ActorRef) extends Actor {
       out ! msg
     case msg: OutgoingMessage =>
       out ! msg
+    case StopActor => 
+      context.stop(self) 
   }
 }
 

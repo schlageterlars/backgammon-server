@@ -21,6 +21,8 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import org.apache.pekko.NotUsed
 
+case object StopActor
+
 @Singleton
 class LobbyController @Inject()(cc: ControllerComponents)
                                (implicit system: ActorSystem, mat: Materializer, ec: ExecutionContext)
@@ -30,7 +32,14 @@ class LobbyController @Inject()(cc: ControllerComponents)
 
   // Create a new lobby with auto-generated ID
   def createLobby: Action[JsValue] = Action(parse.json) { request =>
-    val options = request.body.validate[LobbyOptions].asOpt.getOrElse(LobbyOptions())
+    val options = request.body.validate[LobbyOptions] match {
+      case JsSuccess(value, _) => value
+      case JsError(errors) =>
+        println(s"Validation failed: $errors")
+        LobbyOptions()  // fallback
+    }
+    println(s"Create Lobby with options ${options}")
+
     val lobbyId = UUID.randomUUID().toString
     lobbyManager ! ("create", lobbyId, options)
     Ok(Json.obj("lobbyId" -> lobbyId))
@@ -53,7 +62,7 @@ class LobbyController @Inject()(cc: ControllerComponents)
     val sink: Sink[JsValue, NotUsed] = Flow[JsValue]
       .map(js => ClientMessage.fromJson(js))
       .collect { case JsSuccess(msg, _) => msg }
-      .to(Sink.actorRef(clientActor, onCompleteMessage = "leave", onFailureMessage = ex => "failure"))
+      .to(Sink.actorRef(clientActor, onCompleteMessage = StopActor, onFailureMessage = ex => "failure"))
 
     Flow.fromSinkAndSource(sink, source)
   }
